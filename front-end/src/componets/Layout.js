@@ -1,5 +1,5 @@
 'use client';
-import { AppBar, Toolbar, Typography, Drawer, List, ListItem, ListItemText, CssBaseline, Box } from '@mui/material';
+import { AppBar, Toolbar, Typography, Drawer, List, ListItemButton, ListItemText, CssBaseline, Box } from '@mui/material';
 import Link from 'next/link';
 
 const drawerWidth = 240;
@@ -34,11 +34,13 @@ export default function Layout({ children }) {
         <Toolbar />
         <List>
           {navItems.map((item) => (
-            <Link key={item.text} href={item.path} passHref>
-              <ListItem button component="a">
-                <ListItemText primary={item.text} />
-              </ListItem>
-            </Link>
+            <ListItemButton
+              key={item.text}
+              component={Link}
+              href={item.path}
+            >
+              <ListItemText primary={item.text} />
+            </ListItemButton>
           ))}
         </List>
       </Drawer>
