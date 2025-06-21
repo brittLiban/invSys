@@ -7,7 +7,7 @@ const drawerWidth = 240;
 const navItems = [
   { text: 'Dashboard', path: '/dashboard' },
   { text: 'Products', path: '/products' },
-  { text: 'Scanner', path: '/scanner' },
+  { text: 'Add Product', path: '/add-product' },
 ];
 
 export default function Layout({ children }) {

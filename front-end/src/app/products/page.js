@@ -3,95 +3,98 @@
 import { useEffect, useState } from 'react';
 import supabase from '../lib/supabaseClient';
 import {
-  Typography, TextField, Button, Box,
-  List, ListItem, ListItemText, CircularProgress
+  Typography, CircularProgress, TextField,
+  Table, TableBody, TableCell, TableContainer,
+  TableHead, TableRow, Paper, Box
 } from '@mui/material';
 
 export default function ProductsPage() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [form, setForm] = useState({
-    name: '',
-    sku: '',
-    price: '',
-    quantity: '',
-  });
-
-  const fetchProducts = async () => {
-    const { data, error } = await supabase.from('products').select('*');
-    if (error) console.error('❌ Supabase fetch error:', error.message);
-    else setProducts(data);
-    setLoading(false);
-  };
+  const [filters, setFilters] = useState({ name: '', sku: '', barcode: '' });
 
   useEffect(() => {
-    fetchProducts();
+    (async () => {
+      const { data, error } = await supabase.from('products').select('*');
+      if (error) console.error('❌ Fetch error:', error.message);
+      else setProducts(data);
+      setLoading(false);
+    })();
   }, []);
 
-  const handleInputChange = (e) => {
+  const handleFilterChange = (e) => {
     const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
+    setFilters((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleAddProduct = async (e) => {
-    e.preventDefault();
-    const { name, sku, price, quantity } = form;
-
-    const { error } = await supabase.from('products').insert([
-      { name, sku, price: parseFloat(price), quantity: parseInt(quantity, 10) }
-    ]);
-
-    if (error) {
-      console.error('❌ Insert error:', error.message);
-    } else {
-      setForm({ name: '', sku: '', price: '', quantity: '' });
-      fetchProducts();
-    }
-  };
+  const filteredProducts = products.filter((product) => {
+    return (
+      product.name?.toLowerCase().includes(filters.name.toLowerCase()) &&
+      product.sku?.toLowerCase().includes(filters.sku.toLowerCase()) &&
+      product.barcode?.toLowerCase().includes(filters.barcode.toLowerCase())
+    );
+  });
 
   return (
     <>
-      <Typography variant="h4" gutterBottom>Products</Typography>
+      <Typography variant="h4" gutterBottom>Inventory</Typography>
 
-      <Box component="form" onSubmit={handleAddProduct} sx={{ mb: 4 }}>
+      <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', mb: 2 }}>
         <TextField
-          label="Name" name="name" value={form.name} onChange={handleInputChange}
-          required fullWidth margin="normal"
+          label="Filter by Name"
+          name="name"
+          value={filters.name}
+          onChange={handleFilterChange}
         />
         <TextField
-          label="SKU" name="sku" value={form.sku} onChange={handleInputChange}
-          required fullWidth margin="normal"
+          label="Filter by SKU"
+          name="sku"
+          value={filters.sku}
+          onChange={handleFilterChange}
         />
         <TextField
-          label="Price" name="price" type="number" value={form.price} onChange={handleInputChange}
-          required fullWidth margin="normal"
+          label="Filter by Barcode"
+          name="barcode"
+          value={filters.barcode}
+          onChange={handleFilterChange}
         />
-        <TextField
-          label="Quantity" name="quantity" type="number" value={form.quantity} onChange={handleInputChange}
-          required fullWidth margin="normal"
-        />
-        <Button type="submit" variant="contained">Add Product</Button>
       </Box>
 
       {loading ? (
         <CircularProgress />
       ) : (
-        <List>
-          {products.length === 0 ? (
-            <ListItem>
-              <ListItemText primary="No products found." />
-            </ListItem>
-          ) : (
-            products.map((product) => (
-              <ListItem key={product.id} divider>
-                <ListItemText
-                  primary={product.name}
-                  secondary={`SKU: ${product.sku} | $${product.price} | Qty: ${product.quantity}`}
-                />
-              </ListItem>
-            ))
-          )}
-        </List>
+        <TableContainer component={Paper}>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell><strong>Name</strong></TableCell>
+                <TableCell><strong>SKU</strong></TableCell>
+                <TableCell><strong>Barcode</strong></TableCell>
+                <TableCell><strong>Price</strong></TableCell>
+                <TableCell><strong>Quantity</strong></TableCell>
+                <TableCell><strong>Created At</strong></TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {filteredProducts.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={6}>No matching products found.</TableCell>
+                </TableRow>
+              ) : (
+                filteredProducts.map((product) => (
+                  <TableRow key={product.id}>
+                    <TableCell>{product.name}</TableCell>
+                    <TableCell>{product.sku}</TableCell>
+                    <TableCell>{product.barcode || '-'}</TableCell>
+                    <TableCell>${product.price.toFixed(2)}</TableCell>
+                    <TableCell>{product.quantity}</TableCell>
+                    <TableCell>{new Date(product.created_at).toLocaleString()}</TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </TableContainer>
       )}
     </>
   );
