@@ -1,6 +1,15 @@
 'use client';
-import { Typography } from '@mui/material';
+import { useAuth } from '@/hooks/useAuth';
 
 export default function DashboardPage() {
-  return <Typography variant="h4">Dashboard</Typography>;
+  const { user, loading } = useAuth();
+
+  if (loading) return <p>Loading...</p>;
+
+  return (
+    <div>
+      <h1>Dashboard</h1>
+      <p>Welcome {user ? user.email : 'Guest'}!</p>
+    </div>
+  );
 }
