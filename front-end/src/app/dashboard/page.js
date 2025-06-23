@@ -2,14 +2,16 @@
 import { useAuth } from '@/hooks/useAuth';
 
 export default function DashboardPage() {
-  const { user, loading } = useAuth();
-
-  if (loading) return <p>Loading...</p>;
+  const { user, role } = useAuth();
 
   return (
     <div>
-      <h1>Dashboard</h1>
-      <p>Welcome {user ? user.email : 'Guest'}!</p>
+      <h1>Welcome {user?.email}</h1>
+      <p>Your role: {role}</p>
+
+      {role === 'admin' && (
+        <button>Add New Product</button>
+      )}
     </div>
   );
 }
