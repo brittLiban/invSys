@@ -1,52 +1,52 @@
 'use client';
-import { AppBar, Toolbar, Typography, Drawer, List, ListItemButton, ListItemText, CssBaseline, Box } from '@mui/material';
+
 import Link from 'next/link';
-
-const drawerWidth = 240;
-
-const navItems = [
-  { text: 'Dashboard', path: '/dashboard' },
-  { text: 'Products', path: '/products' },
-  { text: 'Add Product', path: '/add-product' },
-];
+import { useRouter } from 'next/navigation';
+import { Box, List, ListItemButton, ListItemText, Button, AppBar, Toolbar, CssBaseline } from '@mui/material';
+import { useAuth } from '@/hooks/useAuth';
 
 export default function Layout({ children }) {
+  const { user, role, signOut } = useAuth();
+  const router = useRouter();
+
+  const handleSignOut = async () => {
+    await signOut();
+    router.push('/login');
+  };
+
   return (
     <Box sx={{ display: 'flex' }}>
       <CssBaseline />
-
       <AppBar position="fixed" sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}>
-        <Toolbar>
-          <Typography variant="h6" noWrap component="div">
-            Inventory System
-          </Typography>
+        <Toolbar sx={{ justifyContent: 'flex-end' }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <List sx={{ display: 'flex', gap: 1 }} component="nav">
+              <ListItemButton component={Link} href="/dashboard">
+                <ListItemText primary="Dashboard" />
+              </ListItemButton>
+              <ListItemButton component={Link} href="/products">
+                <ListItemText primary="Products" />
+              </ListItemButton>
+              <ListItemButton component={Link} href="/add-product">
+                <ListItemText primary="Add Product" />
+              </ListItemButton>
+              {role === 'Admin' && (
+                <ListItemButton component={Link} href="/admin/users">
+                  <ListItemText primary="Manage Users" />
+                </ListItemButton>
+              )}
+            </List>
+
+            {user ? (
+              <Button color="inherit" onClick={handleSignOut}>Sign Out</Button>
+            ) : (
+              <Button color="inherit" component={Link} href="/login">Sign In</Button>
+            )}
+          </Box>
         </Toolbar>
       </AppBar>
 
-      <Drawer
-        variant="permanent"
-        sx={{
-          width: drawerWidth,
-          flexShrink: 0,
-          [`& .MuiDrawer-paper`]: { width: drawerWidth, boxSizing: 'border-box' },
-        }}
-      >
-        <Toolbar />
-        <List>
-          {navItems.map((item) => (
-            <ListItemButton
-              key={item.text}
-              component={Link}
-              href={item.path}
-            >
-              <ListItemText primary={item.text} />
-            </ListItemButton>
-          ))}
-        </List>
-      </Drawer>
-
-      <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
-        <Toolbar />
+      <Box component="main" sx={{ flexGrow: 1, p: 3, mt: 8 }}>
         {children}
       </Box>
     </Box>
