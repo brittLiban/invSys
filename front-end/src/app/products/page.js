@@ -1,30 +1,47 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useAuth } from '@/hooks/useAuth';
 import supabase from '../../lib/supabaseClient';
 import {
   Typography, CircularProgress, TextField,
   Table, TableBody, TableCell, TableContainer,
-  TableHead, TableRow, Paper, Box
+  TableHead, TableRow, Paper, Box, IconButton
 } from '@mui/material';
+import DeleteIcon from '@mui/icons-material/Delete';
 
 export default function ProductsPage() {
+  const { role } = useAuth();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({ name: '', sku: '', barcode: '' });
 
   useEffect(() => {
-    (async () => {
-      const { data, error } = await supabase.from('products').select('*');
-      if (error) console.error('❌ Fetch error:', error.message);
-      else setProducts(data);
-      setLoading(false);
-    })();
+    fetchProducts();
   }, []);
+
+  const fetchProducts = async () => {
+    const { data, error } = await supabase.from('products').select('*');
+    if (error) console.error('❌ Fetch error:', error.message);
+    else setProducts(data);
+    setLoading(false);
+  };
 
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
     setFilters((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleDelete = async (id) => {
+    const confirm = window.confirm('Are you sure you want to delete this product?');
+    if (!confirm) return;
+
+    const { error } = await supabase.from('products').delete().eq('id', id);
+    if (error) {
+      console.error('❌ Delete error:', error.message);
+    } else {
+      fetchProducts(); // Refresh product list
+    }
   };
 
   const filteredProducts = products.filter((product) => {
@@ -40,24 +57,9 @@ export default function ProductsPage() {
       <Typography variant="h4" gutterBottom>Inventory</Typography>
 
       <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', mb: 2 }}>
-        <TextField
-          label="Filter by Name"
-          name="name"
-          value={filters.name}
-          onChange={handleFilterChange}
-        />
-        <TextField
-          label="Filter by SKU"
-          name="sku"
-          value={filters.sku}
-          onChange={handleFilterChange}
-        />
-        <TextField
-          label="Filter by Barcode"
-          name="barcode"
-          value={filters.barcode}
-          onChange={handleFilterChange}
-        />
+        <TextField label="Filter by Name" name="name" value={filters.name} onChange={handleFilterChange} />
+        <TextField label="Filter by SKU" name="sku" value={filters.sku} onChange={handleFilterChange} />
+        <TextField label="Filter by Barcode" name="barcode" value={filters.barcode} onChange={handleFilterChange} />
       </Box>
 
       {loading ? (
@@ -73,12 +75,13 @@ export default function ProductsPage() {
                 <TableCell><strong>Price</strong></TableCell>
                 <TableCell><strong>Quantity</strong></TableCell>
                 <TableCell><strong>Created At</strong></TableCell>
+                {['Admin', 'Manager'].includes(role) && <TableCell><strong>Actions</strong></TableCell>}
               </TableRow>
             </TableHead>
             <TableBody>
               {filteredProducts.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6}>No matching products found.</TableCell>
+                  <TableCell colSpan={7}>No matching products found.</TableCell>
                 </TableRow>
               ) : (
                 filteredProducts.map((product) => (
@@ -89,6 +92,13 @@ export default function ProductsPage() {
                     <TableCell>${product.price.toFixed(2)}</TableCell>
                     <TableCell>{product.quantity}</TableCell>
                     <TableCell>{new Date(product.created_at).toLocaleString()}</TableCell>
+                    {['Admin', 'Manager'].includes(role) && (
+                      <TableCell>
+                        <IconButton color="error" onClick={() => handleDelete(product.id)}>
+                          <DeleteIcon />
+                        </IconButton>
+                      </TableCell>
+                    )}
                   </TableRow>
                 ))
               )}

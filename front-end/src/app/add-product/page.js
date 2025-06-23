@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useAuth } from '@/hooks/useAuth'; // 👈 include auth hook
 import supabase from '../../lib/supabaseClient';
 import {
   Typography, TextField, Button, Box,
@@ -8,12 +9,17 @@ import {
 } from '@mui/material';
 
 export default function AddProductPage() {
+  const { role } = useAuth(); // 👈 get user role
   const [mode, setMode] = useState('scanner');
   const [form, setForm] = useState({
     name: '', sku: '', price: '', quantity: ''
   });
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
+
+  if (!['admin', 'manager'].includes(role)) {
+    return <Typography>🚫 You don’t have permission to add products.</Typography>;
+  }
 
   const handleModeChange = (event, newMode) => {
     if (newMode !== null) setMode(newMode);
@@ -57,12 +63,8 @@ export default function AddProductPage() {
           onChange={handleModeChange}
           aria-label="entry mode"
         >
-          <ToggleButton value="manual" aria-label="manual entry">
-            Manual Entry
-          </ToggleButton>
-          <ToggleButton value="scanner" aria-label="barcode scanner">
-            Scan Barcode
-          </ToggleButton>
+          <ToggleButton value="manual">Manual Entry</ToggleButton>
+          <ToggleButton value="scanner">Scan Barcode</ToggleButton>
         </ToggleButtonGroup>
       </Box>
 
@@ -71,32 +73,17 @@ export default function AddProductPage() {
 
       {mode === 'manual' && (
         <Box component="form" onSubmit={handleSubmit} sx={{ maxWidth: 400 }}>
-          <TextField
-            label="Name" name="name" value={form.name}
-            onChange={handleInputChange} required fullWidth margin="normal"
-          />
-          <TextField
-            label="SKU" name="sku" value={form.sku}
-            onChange={handleInputChange} required fullWidth margin="normal"
-          />
-          <TextField
-            label="Price" name="price" type="number" value={form.price}
-            onChange={handleInputChange} required fullWidth margin="normal"
-          />
-          <TextField
-            label="Quantity" name="quantity" type="number"
-            value={form.quantity} onChange={handleInputChange}
-            required fullWidth margin="normal"
-          />
+          <TextField label="Name" name="name" value={form.name} onChange={handleInputChange} required fullWidth margin="normal" />
+          <TextField label="SKU" name="sku" value={form.sku} onChange={handleInputChange} required fullWidth margin="normal" />
+          <TextField label="Price" name="price" type="number" value={form.price} onChange={handleInputChange} required fullWidth margin="normal" />
+          <TextField label="Quantity" name="quantity" type="number" value={form.quantity} onChange={handleInputChange} required fullWidth margin="normal" />
           <Button type="submit" variant="contained">Create Product</Button>
         </Box>
       )}
 
       {mode === 'scanner' && (
         <Box sx={{ mt: 3 }}>
-          <Typography variant="body1">
-            📸 Barcode scanner UI goes here. We’ll integrate your scanner flow here later.
-          </Typography>
+          <Typography variant="body1">📸 Barcode scanner UI goes here.</Typography>
         </Box>
       )}
     </>
